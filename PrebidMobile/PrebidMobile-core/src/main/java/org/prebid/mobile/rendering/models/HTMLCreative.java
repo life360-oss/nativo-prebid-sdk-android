@@ -148,8 +148,6 @@ public class HTMLCreative extends AbstractCreative implements WebViewDelegate, I
         }
         PrebidWebViewBase creativeWebView = (PrebidWebViewBase) getCreativeView();
 
-        // Fire impression
-        startViewabilityTracker();
     }
 
     @Override

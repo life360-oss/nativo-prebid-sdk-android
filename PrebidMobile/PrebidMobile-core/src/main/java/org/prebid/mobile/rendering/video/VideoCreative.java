@@ -100,7 +100,6 @@ public class VideoCreative extends VideoCreativeProtocol
             setStartIsMutedValue(model.getAdConfiguration().isMuted());
 
             model.trackPlayerStateChange(InternalPlayerState.NORMAL);
-            startViewabilityTracker();
         }
     }
 

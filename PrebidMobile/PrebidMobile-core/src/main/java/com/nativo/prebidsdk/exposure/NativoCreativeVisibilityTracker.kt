@@ -1,6 +1,8 @@
 package com.nativo.prebidsdk.exposure
 
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
 import android.view.View
 import android.view.ViewTreeObserver
 import org.prebid.mobile.LogUtil
@@ -36,6 +38,7 @@ class NativoCreativeVisibilityTracker(
     private val viewabilityTimerMap: MutableMap<VisibilityChecker, PausableCountDownTimer> = mutableMapOf()
 
     private val viewabilityCheckDebouncer: () -> Unit
+    private val handler = Handler(Looper.getMainLooper())
 
     constructor(
         trackedView: View,
@@ -88,8 +91,8 @@ class NativoCreativeVisibilityTracker(
             return
         }
         setViewTreeObserver(context, tracked)
-        // Run initial check
-        viewabilityCheckDebouncer.invoke()
+        // Run initial check. Wait a rendering cycle for ad to become visible!
+        handler.postDelayed({ viewabilityCheckDebouncer.invoke() }, 0)
     }
 
     /**
