@@ -8,6 +8,7 @@ import org.json.JSONObject
 import org.prebid.mobile.LogUtil
 import org.prebid.mobile.api.data.AdFormat
 import org.prebid.mobile.api.exceptions.AdException
+import org.prebid.mobile.api.rendering.PrebidDisplayView
 import org.prebid.mobile.api.rendering.PrebidMobileInterstitialControllerInterface
 import org.prebid.mobile.api.rendering.pluginrenderer.PluginEventListener
 import org.prebid.mobile.api.rendering.pluginrenderer.PrebidMobilePluginRenderer
@@ -39,7 +40,7 @@ class NativoPrebidRenderer : PrebidMobilePluginRenderer {
         adUnitConfiguration: AdUnitConfiguration,
         bidResponse: BidResponse
     ): View {
-        var displayViewRef: NativoDisplayView? = null
+        var displayViewRef: PrebidDisplayView? = null
         val forwardingListener = object : DisplayViewListener {
             override fun onAdLoaded() {
                 displayViewListener.onAdLoaded()
@@ -65,7 +66,7 @@ class NativoPrebidRenderer : PrebidMobilePluginRenderer {
             }
         }
 
-        val displayView = NativoDisplayView(
+        val displayView = PrebidDisplayView(
             context,
             forwardingListener,
             displayVideoListener,
