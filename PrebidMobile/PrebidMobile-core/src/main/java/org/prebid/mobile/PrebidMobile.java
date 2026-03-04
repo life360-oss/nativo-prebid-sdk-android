@@ -17,14 +17,11 @@
 package org.prebid.mobile;
 
 import android.content.Context;
-import android.util.Log;
 import android.util.Patterns;
 import android.webkit.URLUtil;
-
 import androidx.annotation.MainThread;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-
 import org.prebid.mobile.LogUtil.PrebidLogger;
 import org.prebid.mobile.api.data.InitializationStatus;
 import org.prebid.mobile.api.rendering.pluginrenderer.PrebidMobilePluginRegister;
@@ -47,6 +44,9 @@ import java.util.Map;
  * and manage internal behaviour.
  */
 public class PrebidMobile {
+
+    // Retry attempts for CreativeFactory timeouts
+    private static int creativeFactoryTimeoutRetryCount = 2;
 
     /**
      * Minimum refresh interval allowed. 30 seconds
@@ -88,7 +88,7 @@ public class PrebidMobile {
     /**
      * Tested Google SDK version.
      */
-    public static final String TESTED_GOOGLE_SDK_VERSION = "24.8.0";
+    public static final String TESTED_GOOGLE_SDK_VERSION = "25.0.0";
 
     private static LogLevel logLevel = LogLevel.NONE;
     @Nullable
@@ -391,7 +391,7 @@ public class PrebidMobile {
         }
 
         if (!Patterns.WEB_URL.matcher(url).matches()) {
-            Log.e(TAG, "Can't set custom /status endpoint, it is not valid.");
+            LogUtil.error(TAG, "Can't set custom /status endpoint, it is not valid.");
             return;
         }
 
@@ -480,6 +480,20 @@ public class PrebidMobile {
         return creativeFactoryTimeoutPreRenderContent;
     }
 
+    /**
+     * Gets number of retry attempts for CreativeFactory timeouts.
+     * Default is 2. Set to 0 to disable retries.
+     */
+    public static int getCreativeFactoryTimeoutRetryCount() {
+        return creativeFactoryTimeoutRetryCount;
+    }
+
+    /**
+     * Sets number of retry attempts for CreativeFactory timeouts. Negative values are treated as 0.
+     */
+    public static void setCreativeFactoryTimeoutRetryCount(int retryCount) {
+        PrebidMobile.creativeFactoryTimeoutRetryCount = Math.max(0, retryCount);
+    }
 
     /**
      * Sets creative factory timeout for prerender content. It's time to parse and render interstitial ads.

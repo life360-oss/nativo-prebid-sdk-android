@@ -21,7 +21,4 @@ class NativoDisplayView : PrebidDisplayView {
         response: BidResponse
     ) : super(context, listener, displayVideoListener, adUnitConfiguration, response)
 
-    init {
-        destoyOnDetatch = false
-    }
 }
