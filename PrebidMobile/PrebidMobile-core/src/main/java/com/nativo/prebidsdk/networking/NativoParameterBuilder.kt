@@ -10,14 +10,9 @@ class NativoParameterBuilder(
 
     override fun appendBuilderParameters(adRequestInput: AdRequestInput) {
         val bidRequest = adRequestInput.bidRequest
-        bidRequest.device.ip = FALLBACK_IP
 
         for (imp in bidRequest.imp) {
             imp.tagid = adConfiguration.configId
         }
-    }
-
-    companion object {
-        private const val FALLBACK_IP = "108.214.18.218"
     }
 }
