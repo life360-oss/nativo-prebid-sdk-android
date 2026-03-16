@@ -1,8 +1,10 @@
 package com.nativo.prebidsdk.renderer
 
 import android.content.Context
+import android.content.res.Resources
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewTreeObserver
 import android.widget.FrameLayout
 import org.json.JSONObject
 import org.prebid.mobile.LogUtil
@@ -25,6 +27,7 @@ class NativoPrebidRenderer : PrebidMobilePluginRenderer {
         private const val TAG = "NativoPrebidRenderer"
         const val NAME = "NativoRenderer"
         const val VERSION = "1.0.0"
+        private const val BANNER_VIEW_CLASS = "org.prebid.mobile.api.rendering.BannerView"
     }
 
     override fun getName(): String = NAME
@@ -41,16 +44,19 @@ class NativoPrebidRenderer : PrebidMobilePluginRenderer {
         bidResponse: BidResponse
     ): View {
         var displayViewRef: PrebidDisplayView? = null
+
         val forwardingListener = object : DisplayViewListener {
             override fun onAdLoaded() {
                 displayViewListener.onAdLoaded()
             }
 
             override fun onAdDisplayed() {
-                displayViewListener.onAdDisplayed()
-                displayViewRef?.let {
-                    setChildrenFullWidth(it)
+                displayViewRef?.let { displayView ->
+                    if (isNativoAd(bidResponse)) {
+                        renderNativoAd(displayView, bidResponse)
+                    }
                 }
+                displayViewListener.onAdDisplayed()
             }
 
             override fun onAdFailed(exception: AdException) {
@@ -101,38 +107,6 @@ class NativoPrebidRenderer : PrebidMobilePluginRenderer {
         return adUnitConfiguration.isAdType(AdFormat.BANNER)
     }
 
-    private fun setChildrenFullWidth(displayView: ViewGroup) {
-            val child = displayView.getChildAt(0)
-            if (child == null) {
-                LogUtil.error(TAG, "Nativo renderer expected a child view on PrebidDisplayView, but none was found.")
-                return
-            }
-            ensureFullWidth(child)
-            if (child is ViewGroup && child.childCount > 0) {
-                ensureFullWidth(child.getChildAt(0))
-            }
-    }
-
-    private fun ensureFullWidth(view: View) {
-        val layoutParams = view.layoutParams
-        if (layoutParams != null) {
-            layoutParams.width = ViewGroup.LayoutParams.MATCH_PARENT
-            view.layoutParams = layoutParams
-            return
-        }
-
-        view.layoutParams = when (view.parent) {
-            is FrameLayout -> FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-            )
-            else -> ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-            )
-        }
-    }
-
     override fun registerEventListener(
         pluginEventListener: PluginEventListener,
         listenerKey: String
@@ -141,4 +115,126 @@ class NativoPrebidRenderer : PrebidMobilePluginRenderer {
 
     override fun unregisterEventListener(listenerKey: String) {
     }
+
+
+    // Private methods
+
+    private fun isNativoAd(bidResponse: BidResponse): Boolean {
+        val adm = bidResponse.winningBid?.adm ?: ""
+        return adm.contains("load.js", ignoreCase = true)
+    }
+
+    /**
+     * Expand the article full width, and attempt to expand height to parent container,
+     * while also ensuring at least a minimum height of the requested bid.
+     */
+    private fun renderNativoAd(displayView: PrebidDisplayView, bidResponse: BidResponse) {
+        val minHeightPx = (bidResponse.winningBid?.height ?: 0).dpToPx()
+
+        expandFullWidth(displayView)
+
+        val parentView = findBannerViewParent(displayView)
+        if (parentView != null) {
+            applyHeightStrategy(displayView, parentView.height, minHeightPx)
+        }
+    }
+
+    /**
+     * Chooses between two height strategies:
+     *
+     * - MATCH_PARENT: BannerView is already at least [minHeightPx] tall — fill it completely
+     *   by setting MATCH_PARENT on every view from BannerView down to the inner WebView.
+     *
+     * - WRAP + minimum: BannerView is too small (or zero) — set WRAP_CONTENT + minimumHeight
+     *   on every view so the floor propagates upward through the container chain.
+     */
+    private fun applyHeightStrategy(displayView: PrebidDisplayView, parentHeight: Int, minHeightPx: Int) {
+        if (parentHeight >= minHeightPx) {
+            expandFullHeight(displayView)
+            expandChildViews(displayView, minHeightPx, useMatchParent = true)
+        } else {
+            setMinHeightChainUpward(displayView, minHeightPx)
+            expandChildViews(displayView, minHeightPx, useMatchParent = false)
+        }
+    }
+
+    private fun findBannerViewParent(view: View): View? {
+        var current: View? = view.parent as? View
+        while (current != null) {
+            if (current::class.java.name == BANNER_VIEW_CLASS) return current.parent as? View
+            current = current.parent as? View
+        }
+        return null
+    }
+
+    private fun expandFullWidth(view: View) {
+        var currentView: View? = view
+        while (currentView != null) {
+            val params = currentView.layoutParams
+            if (params != null) {
+                params.width = ViewGroup.LayoutParams.MATCH_PARENT
+                currentView.layoutParams = params
+            }
+            if (currentView::class.java.name == BANNER_VIEW_CLASS) break
+            currentView = (currentView.parent as? View)
+        }
+    }
+
+    private fun expandFullHeight(view: View) {
+        var currentView: View? = view
+        while (currentView != null) {
+            val params = currentView.layoutParams
+            if (params != null) {
+                params.height = ViewGroup.LayoutParams.MATCH_PARENT
+                currentView.layoutParams = params
+            }
+            if (currentView::class.java.name == BANNER_VIEW_CLASS) break
+            currentView = (currentView.parent as? View)
+        }
+    }
+
+    private fun setMinHeightChainUpward(view: View, minHeightPx: Int) {
+        var currentView: View? = view
+        while (currentView != null) {
+            currentView.minimumHeight = minHeightPx
+            val params = currentView.layoutParams
+            if (params != null) {
+                params.height = ViewGroup.LayoutParams.WRAP_CONTENT
+                currentView.layoutParams = params
+            }
+            if (currentView::class.java.name == BANNER_VIEW_CLASS) break
+            currentView = (currentView.parent as? View)
+        }
+    }
+
+    private fun expandChildViews(displayView: ViewGroup, minHeightPx: Int, useMatchParent: Boolean) {
+        val firstChild = displayView.getChildAt(0)
+        if (firstChild == null) {
+            LogUtil.error(TAG, "Nativo renderer expected a child view on PrebidDisplayView, but none was found.")
+            return
+        }
+
+        val heightParam = if (useMatchParent) ViewGroup.LayoutParams.MATCH_PARENT else minHeightPx
+
+        var current = firstChild as? ViewGroup
+        while (current != null) {
+            val params = current.layoutParams
+            if (params != null) {
+                params.width = ViewGroup.LayoutParams.MATCH_PARENT
+                params.height = heightParam
+                current.layoutParams = params
+            } else {
+                current.layoutParams = FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    heightParam
+                )
+            }
+
+            current = current.getChildAt(0) as? ViewGroup
+        }
+    }
+}
+
+private fun Int.dpToPx(): Int {
+    return (this * Resources.getSystem().displayMetrics.density).toInt()
 }
