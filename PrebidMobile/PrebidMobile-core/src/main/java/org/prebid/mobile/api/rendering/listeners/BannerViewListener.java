@@ -32,6 +32,16 @@ public interface BannerViewListener {
     void onAdLoaded(BannerView bannerView);
 
     /**
+     * Optional method that when implemented will be called when
+     * a Nativo ad wins the bid and is loaded.
+     *
+     * @param bannerView view of the corresponding event.
+     */
+    default void onNativoAdLoaded(BannerView bannerView) {
+        // Optional callback - default empty implementation
+    }
+
+    /**
      * Executed when the ad is displayed on screen.
      *
      * @param bannerView view of the corresponding event.

@@ -43,7 +43,9 @@ import org.prebid.mobile.rendering.bidding.data.bid.Bid;
 import org.prebid.mobile.rendering.bidding.data.bid.BidResponse;
 import org.prebid.mobile.rendering.bidding.interfaces.BannerEventHandler;
 import org.prebid.mobile.rendering.bidding.interfaces.StandaloneBannerEventHandler;
+import com.nativo.prebidsdk.bid.NativoBidResponse;
 import com.nativo.prebidsdk.server.NativoServerProxy;
+import com.nativo.prebidsdk.utils.NativoUtils;
 import org.prebid.mobile.rendering.bidding.listeners.BannerEventListener;
 import org.prebid.mobile.rendering.bidding.listeners.BidRequesterListener;
 import org.prebid.mobile.rendering.bidding.listeners.DisplayVideoListener;
@@ -101,7 +103,11 @@ public class BannerView extends FrameLayout {
         @Override
         public void onAdLoaded() {
             if (bannerViewListener != null) {
-                bannerViewListener.onAdLoaded(BannerView.this);
+                if (bidResponse instanceof NativoBidResponse && NativoUtils.hasImplementedNativoCallback(bannerViewListener)) {
+                    bannerViewListener.onNativoAdLoaded(BannerView.this);
+                } else {
+                    bannerViewListener.onAdLoaded(BannerView.this);
+                }
             }
         }
 
@@ -176,9 +182,9 @@ public class BannerView extends FrameLayout {
     private BidRequesterListener bidRequesterListener = new BidRequesterListener() {
         @Override
         public void onFetchCompleted(BidResponse response) {
-            bidResponse = response;
             prebidException = null;
             BidResponse winningBidResponse = nativoServer.decideWinner(response);
+            bidResponse = winningBidResponse;
             isPrimaryAdServerRequestInProgress = winningBidResponse != null;
             eventHandler.requestAdWithBid(winningBidResponse);
         }
@@ -189,6 +195,7 @@ public class BannerView extends FrameLayout {
             prebidException = exception;
 
             BidResponse winningBidResponse = nativoServer.getNativoBidResponse();
+            bidResponse = winningBidResponse;
             isPrimaryAdServerRequestInProgress = winningBidResponse != null;
             eventHandler.requestAdWithBid(winningBidResponse);
         }
@@ -199,6 +206,7 @@ public class BannerView extends FrameLayout {
         public void onSdkWin(@Nullable BidResponse sdkBidResponse) {
             markPrimaryAdRequestFinished();
 
+            bidResponse = sdkBidResponse;
             AdException parsedException = RenderingExceptionParser.getPrebidException(sdkBidResponse, prebidException);
             if (parsedException != null) {
                 notifyErrorListener(parsedException);
@@ -224,6 +232,7 @@ public class BannerView extends FrameLayout {
             markPrimaryAdRequestFinished();
 
             BidResponse winningBidResponse = nativoServer.decideWinner(bidResponse);
+            bidResponse = winningBidResponse;
             boolean prebidAlsoWithoutAd = RenderingExceptionParser.isBidInvalid(winningBidResponse);
             if (prebidAlsoWithoutAd) {
                 AdException parsedException = RenderingExceptionParser.getPrebidException(bidResponse, prebidException);
