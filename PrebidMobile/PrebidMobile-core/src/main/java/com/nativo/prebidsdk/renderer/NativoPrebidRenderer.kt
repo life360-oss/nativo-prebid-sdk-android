@@ -129,30 +129,25 @@ class NativoPrebidRenderer : PrebidMobilePluginRenderer {
      * while also ensuring at least a minimum height of the requested bid.
      */
     private fun renderNativoAd(displayView: PrebidDisplayView, bidResponse: BidResponse) {
-        val minHeightPx = (bidResponse.winningBid?.height ?: 0).dpToPx()
-
-        expandFullWidth(displayView)
-
         val parentView = findBannerViewParent(displayView)
-        if (parentView != null) {
+        parentView?.post {
+            val minHeightPx = (bidResponse.winningBid?.height ?: 0).dpToPx()
+            expandFullWidth(displayView)
             applyHeightStrategy(displayView, parentView.height, minHeightPx)
         }
     }
 
     /**
      * Chooses between two height strategies:
-     *
-     * - MATCH_PARENT: BannerView is already at least [minHeightPx] tall — fill it completely
-     *   by setting MATCH_PARENT on every view from BannerView down to the inner WebView.
-     *
-     * - WRAP + minimum: BannerView is too small (or zero) — set WRAP_CONTENT + minimumHeight
-     *   on every view so the floor propagates upward through the container chain.
+     * - MATCH_PARENT or WRAP + minimum
      */
     private fun applyHeightStrategy(displayView: PrebidDisplayView, parentHeight: Int, minHeightPx: Int) {
         if (parentHeight >= minHeightPx) {
+            // If parent is taller than minHeight, expand to match parent
             expandFullHeight(displayView)
             expandChildViews(displayView, minHeightPx, useMatchParent = true)
         } else {
+            // If parent is less than minHeight, enforce the bid's minimum
             setMinHeightChainUpward(displayView, minHeightPx)
             expandChildViews(displayView, minHeightPx, useMatchParent = false)
         }
