@@ -114,10 +114,10 @@ class NativoPrebidRenderer : PrebidMobilePluginRenderer {
      */
     private fun renderNativoAd(displayView: PrebidDisplayView, bidResponse: BidResponse) {
         val parentView = findBannerViewParent(displayView)
-        parentView?.let {
+        parentView?.post {
             val minHeightPx = (bidResponse.winningBid?.height ?: 0).dpToPx()
             expandFullWidth(displayView)
-            applyHeightStrategy(displayView, it.height, minHeightPx)
+            applyHeightStrategy(displayView, parentView.height, minHeightPx)
         }
     }
 
