@@ -20,8 +20,12 @@ import android.app.Activity;
 import android.content.Context;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.RelativeLayout;
 import org.prebid.mobile.LogUtil;
+import org.prebid.mobile.rendering.utils.helpers.Utils;
 import org.prebid.mobile.rendering.views.interstitial.InterstitialManager;
 import org.prebid.mobile.rendering.views.webview.PrebidWebViewBase;
 import org.prebid.mobile.rendering.views.webview.WebViewBase;
@@ -34,6 +38,13 @@ public class AdExpandedDialog extends AdBaseDialog {
 
     public AdExpandedDialog(final Context context, final WebViewBase webViewBaseLocal, InterstitialManager interstitialManager) {
         super(context, webViewBaseLocal, interstitialManager);
+
+        // Ensure device status bar remains visible
+        Window window = getWindow();
+        if (window != null) {
+            window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN
+                    | WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+        }
 
         //On MRAID expand we should not remove the old adview such that when the user closes the expanded ad
         //they see the old ad.
@@ -85,6 +96,17 @@ public class AdExpandedDialog extends AdBaseDialog {
         });
 
         webViewBase.setDialog(this);
+    }
+
+    @Override
+    protected void addCloseView() {
+        super.addCloseView();
+        if (closeView != null) {
+            // Ensure close button sits comfortably below the status bar
+            ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) closeView.getLayoutParams();
+            params.topMargin += Utils.convertDpToPx(30, closeView.getContext());
+            closeView.setLayoutParams(params);
+        }
     }
 
     @Override
