@@ -46,15 +46,15 @@ public class AdExpandedDialog extends AdBaseDialog {
                     | WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
         }
 
-        //On MRAID expand we should not remove the old adview such that when the user closes the expanded ad
-        //they see the old ad.
-
-        preInit();
-
         // Hide the web view for now to prevent glitching
         if (webViewBase != null) {
             webViewBase.setAlpha(0f);
         }
+
+        //On MRAID expand we should not remove the old adview such that when the user closes the expanded ad
+        //they see the old ad.
+
+        preInit();
 
         // Attach adViewContainer to the dialog before show() is called so the WebView is already
         // in the view hierarchy when the slide-in animation begins, preventing a visible glitch.
@@ -116,8 +116,8 @@ public class AdExpandedDialog extends AdBaseDialog {
 
     @Override
     protected void handleDialogShow() {
-        webViewBase.post(() -> {
-            webViewBase.animate().alpha(1f).setDuration(500).start();
-        });
+        webViewBase.setOnContentReadyCallback(() ->
+                webViewBase.animate().alpha(1f).setDuration(500).start()
+        );
     }
 }
