@@ -5,6 +5,12 @@
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowFullscreen">true</item>
         <item name="android:colorBackground">@android:color/white</item>
+        <item name="android:windowAnimationStyle">@style/DialogSlideUpAnimation</item>
+    </style>
+
+    <style name="DialogSlideUpAnimation">
+        <item name="android:windowEnterAnimation">@anim/dialog_slide_in_bottom</item>
+        <item name="android:windowExitAnimation">@anim/dialog_slide_out_bottom</item>
     </style>
 
     <style name="AppBaseTheme" parent="android:Theme.Light" />
