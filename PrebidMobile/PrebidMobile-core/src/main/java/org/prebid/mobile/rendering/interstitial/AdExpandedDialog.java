@@ -16,6 +16,7 @@
 
 package org.prebid.mobile.rendering.interstitial;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.util.Log;
@@ -96,6 +97,15 @@ public class AdExpandedDialog extends AdBaseDialog {
         });
 
         webViewBase.setDialog(this);
+        bypassTouchListener();
+    }
+
+    // Bypass the default WebViewBase listener which prevents scrolling
+    @SuppressLint("ClickableViewAccessibility")
+    private void bypassTouchListener() {
+        webViewBase.setOnTouchListener((v, event) -> {
+            return false; // Return false to allow event propagation
+        });
     }
 
     @Override

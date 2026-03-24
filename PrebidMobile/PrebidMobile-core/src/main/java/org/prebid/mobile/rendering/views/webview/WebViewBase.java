@@ -140,6 +140,7 @@ public class WebViewBase extends AdWebView implements AdAssetsLoadedListener {
         //inject MRAID here
         initLoad();
 
+        // TODO: This breaks one-part expand scrolling. Submit PR?
         setOnTouchListener(new OnTouchListener() {
 
             @Override
