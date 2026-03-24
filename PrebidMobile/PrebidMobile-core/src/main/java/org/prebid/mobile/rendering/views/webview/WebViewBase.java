@@ -51,6 +51,9 @@ public class WebViewBase extends AdWebView implements AdAssetsLoadedListener {
     private boolean isClicked = false;
     protected boolean isMRAID;
 
+    private boolean contentReady = false;
+    private Runnable onContentReadyCallback;
+
     private String targetUrl;
 
     public WebViewBase(
@@ -88,8 +91,21 @@ public class WebViewBase extends AdWebView implements AdAssetsLoadedListener {
         mraidInterface.loading();
     }
 
+    public void setOnContentReadyCallback(Runnable callback) {
+        if (contentReady) {
+            callback.run();
+        } else {
+            onContentReadyCallback = callback;
+        }
+    }
+
     @Override
     public void adAssetsLoaded() {
+        contentReady = true;
+        if (onContentReadyCallback != null) {
+            onContentReadyCallback.run();
+            onContentReadyCallback = null;
+        }
 
         if (isMRAID) {
             getMRAIDInterface().prepareAndSendReady();

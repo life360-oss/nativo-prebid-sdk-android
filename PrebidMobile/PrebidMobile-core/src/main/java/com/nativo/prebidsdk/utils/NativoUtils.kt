@@ -1,6 +1,10 @@
 package com.nativo.prebidsdk.utils
 
+import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.os.SystemClock
+import android.view.View
+import android.widget.ImageView
 import org.prebid.mobile.api.rendering.BannerView
 import org.prebid.mobile.api.rendering.listeners.BannerViewListener
 import java.util.concurrent.atomic.AtomicLong
@@ -36,5 +40,31 @@ object NativoUtils {
         } catch (e: NoSuchMethodException) {
             false
         }
+    }
+    
+    /**
+     * Captures a rasterized snapshot of the provided View and returns it as an ImageView.
+     * 
+     * @param view The View to capture
+     * @return ImageView containing the rasterized snapshot of the view
+     */
+    @JvmStatic
+    fun captureViewSnapshot(view: View): ImageView {
+        // Create a bitmap with the same dimensions as the view
+        val bitmap = Bitmap.createBitmap(
+            view.width,
+            view.height,
+            Bitmap.Config.ARGB_8888
+        )
+        
+        // Create a canvas to draw the view onto the bitmap
+        val canvas = Canvas(bitmap)
+        view.draw(canvas)
+        
+        // Create an ImageView and set the captured bitmap
+        val imageView = ImageView(view.context)
+        imageView.setImageBitmap(bitmap)
+        
+        return imageView
     }
 }

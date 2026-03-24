@@ -5,6 +5,8 @@ import android.content.res.Resources
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
+import android.widget.ImageView
+import com.nativo.prebidsdk.utils.NativoUtils
 import org.json.JSONObject
 import org.prebid.mobile.LogUtil
 import org.prebid.mobile.api.data.AdFormat
@@ -42,35 +44,71 @@ class NativoPrebidRenderer : PrebidMobilePluginRenderer {
         adUnitConfiguration: AdUnitConfiguration,
         bidResponse: BidResponse
     ): View {
-        val displayView = PrebidDisplayView(
+        var displayViewRef: PrebidDisplayView? = null
+
+        val forwardingListener = object : DisplayViewListener {
+            override fun onAdLoaded() = displayViewListener.onAdLoaded()
+            override fun onAdClicked() {
+                displayViewRef?.let { displayView ->
+                    val snapshot = NativoUtils.captureViewSnapshot(displayView)
+                    snapshot.tag = TAG
+                    snapshot.layoutParams = FrameLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT
+                    )
+                    displayView.addView(snapshot)
+                }
+                displayViewListener.onAdClicked()
+            }
+            override fun onAdClosed() {
+                displayViewListener.onAdClosed()
+                displayViewRef?.let { displayView ->
+                    displayView.postDelayed({
+                        val snapshot = displayView.findViewWithTag<ImageView>(TAG)
+                        snapshot?.let {
+                            displayView.removeView(it)
+                        }
+                    }, 500)
+                }
+            }
+            override fun onAdDisplayed() {
+                displayViewRef?.let { displayView ->
+
+                    // Check if bid has a Nativo ad before rendering
+                    if (isNativoAd(bidResponse)) {
+                        // Ensure view is attached to window before rendering
+                        if (displayView.isAttachedToWindow) {
+                            renderNativoAd(displayView, bidResponse)
+                        } else {
+                            displayView.addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
+                                override fun onViewAttachedToWindow(view: View) {
+                                    renderNativoAd(displayView, bidResponse)
+                                }
+                                override fun onViewDetachedFromWindow(v: View) {}
+                            })
+                        }
+                    }
+                    displayViewListener.onAdDisplayed()
+                }
+            }
+            override fun onAdFailed(exception: AdException?) = displayViewListener.onAdFailed(exception)
+        }
+
+        displayViewRef = PrebidDisplayView(
             context,
-            displayViewListener,
+            forwardingListener,
             displayVideoListener,
             adUnitConfiguration,
             bidResponse
         )
 
-        displayView.layoutParams = FrameLayout.LayoutParams(
+        // Set default height to WRAP_CONTENT for non-Nativo ads
+        displayViewRef.layoutParams = FrameLayout.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT,
-            ViewGroup.LayoutParams.MATCH_PARENT
+            ViewGroup.LayoutParams.WRAP_CONTENT
         )
 
-        // Some clients may attach adView later once loaded (we can't rely on onAdDisplayed as there maybe a race condition)
-        // This is when we should render the ad so that it scales correctly inside the parent container
-        if (isNativoAd(bidResponse)) {
-            displayView.addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
-                override fun onViewAttachedToWindow(view: View) {
-                    view.removeOnAttachStateChangeListener(this)
-                    (view as? PrebidDisplayView)?.let {
-                        renderNativoAd(it, bidResponse)
-                    }
-                }
-
-                override fun onViewDetachedFromWindow(v: View) {}
-            })
-        }
-
-        return displayView
+        return displayViewRef
     }
 
     override fun createInterstitialController(
@@ -117,7 +155,7 @@ class NativoPrebidRenderer : PrebidMobilePluginRenderer {
         parentView?.post {
             val minHeightPx = (bidResponse.winningBid?.height ?: 0).dpToPx()
             expandFullWidth(displayView)
-            applyHeightStrategy(displayView, parentView.height, minHeightPx)
+            applyHeightStrategy(displayView, parentView, minHeightPx)
         }
     }
 
@@ -125,7 +163,8 @@ class NativoPrebidRenderer : PrebidMobilePluginRenderer {
      * Chooses between two height strategies:
      * - MATCH_PARENT or WRAP + minimum
      */
-    private fun applyHeightStrategy(displayView: PrebidDisplayView, parentHeight: Int, minHeightPx: Int) {
+    private fun applyHeightStrategy(displayView: PrebidDisplayView, parentView: View, minHeightPx: Int) {
+        val parentHeight = if (parentView.layoutParams.height == ViewGroup.LayoutParams.WRAP_CONTENT)  0 else parentView.height
         if (parentHeight >= minHeightPx) {
             // If parent is taller than minHeight, expand to match parent
             expandFullHeight(displayView)
