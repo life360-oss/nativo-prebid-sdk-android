@@ -40,6 +40,20 @@ public class AdExpandedDialog extends AdBaseDialog {
 
         preInit();
 
+        // Hide the web view for now to prevent glitching
+        if (webViewBase != null) {
+            webViewBase.setAlpha(0f);
+        }
+
+        // Attach adViewContainer to the dialog before show() is called so the WebView is already
+        // in the view hierarchy when the slide-in animation begins, preventing a visible glitch.
+        Views.removeFromParent(adViewContainer);
+        addContentView(adViewContainer,
+                new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT,
+                        RelativeLayout.LayoutParams.MATCH_PARENT
+                )
+        );
+
         if (webViewBase != null && webViewBase.isMRAID()) {
             webViewBase.getMRAIDInterface().onStateChange(JSInterface.STATE_EXPANDED);
         }
@@ -80,11 +94,8 @@ public class AdExpandedDialog extends AdBaseDialog {
 
     @Override
     protected void handleDialogShow() {
-        Views.removeFromParent(adViewContainer);
-        addContentView(adViewContainer,
-                new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT,
-                        RelativeLayout.LayoutParams.MATCH_PARENT
-                )
-        );
+        webViewBase.post(() -> {
+            webViewBase.animate().alpha(1f).setDuration(500).start();
+        });
     }
 }

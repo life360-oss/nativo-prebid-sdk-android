@@ -5,6 +5,8 @@ import android.content.res.Resources
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
+import android.widget.ImageView
+import com.nativo.prebidsdk.utils.NativoUtils
 import org.json.JSONObject
 import org.prebid.mobile.LogUtil
 import org.prebid.mobile.api.data.AdFormat
@@ -46,8 +48,29 @@ class NativoPrebidRenderer : PrebidMobilePluginRenderer {
 
         val forwardingListener = object : DisplayViewListener {
             override fun onAdLoaded() = displayViewListener.onAdLoaded()
-            override fun onAdClicked() = displayViewListener.onAdClicked()
-            override fun onAdClosed() = displayViewListener.onAdClosed()
+            override fun onAdClicked() {
+                displayViewRef?.let { displayView ->
+                    val snapshot = NativoUtils.captureViewSnapshot(displayView)
+                    snapshot.tag = TAG
+                    snapshot.layoutParams = FrameLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT
+                    )
+                    displayView.addView(snapshot)
+                }
+                displayViewListener.onAdClicked()
+            }
+            override fun onAdClosed() {
+                displayViewListener.onAdClosed()
+                displayViewRef?.let { displayView ->
+                    displayView.postDelayed({
+                        val snapshot = displayView.findViewWithTag<ImageView>(TAG)
+                        snapshot?.let {
+                            displayView.removeView(it)
+                        }
+                    }, 500)
+                }
+            }
             override fun onAdDisplayed() {
                 displayViewRef?.let { displayView ->
 
@@ -77,6 +100,12 @@ class NativoPrebidRenderer : PrebidMobilePluginRenderer {
             displayVideoListener,
             adUnitConfiguration,
             bidResponse
+        )
+
+        // Set default height to WRAP_CONTENT for non-Nativo ads
+        displayViewRef.layoutParams = FrameLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
         )
 
         return displayViewRef
