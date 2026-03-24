@@ -117,7 +117,10 @@ public class AdExpandedDialog extends AdBaseDialog {
     @Override
     protected void handleDialogShow() {
         webViewBase.setOnContentReadyCallback(() ->
-                webViewBase.animate().alpha(1f).setDuration(500).start()
+                webViewBase.postDelayed(() ->
+                                webViewBase.animate().alpha(1f).setDuration(250).start()
+                        ,300)
+
         );
     }
 }
