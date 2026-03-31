@@ -7,6 +7,7 @@ object NativoBidExt {
     private const val EXT_KEY = "ext"
     private const val NATIVO_KEY = "nativo"
     private const val OWNED_OPERATED_KEY = "oo"
+    private const val AD_TYPE_KEY = "nativoAdType"
 
     @JvmStatic
     fun isOwnedOperated(bid: Bid?): Boolean {
@@ -27,4 +28,24 @@ object NativoBidExt {
             false
         }
     }
+    
+    @JvmStatic
+    fun getNativoAdType(bid: Bid?): NativoAdType? {
+        if (bid == null) {
+            return null
+        }
+        val json = bid.jsonString ?: return null
+        return try {
+            val root = JSONObject(json)
+            val ext = root.optJSONObject(EXT_KEY) ?: return null
+            val nativo = ext.optJSONObject(NATIVO_KEY) ?: return null
+            when (val raw = nativo.opt(AD_TYPE_KEY)) {
+                is Number -> NativoAdType.fromInt(raw.toInt())
+                else -> return null
+            }
+        } catch (_: Exception) {
+            null
+        }
+    }
+    
 }

@@ -6,6 +6,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.ImageView
+import com.nativo.prebidsdk.bid.NativoAdType
+import com.nativo.prebidsdk.bid.NativoBidExt
 import com.nativo.prebidsdk.utils.NativoUtils
 import org.json.JSONObject
 import org.prebid.mobile.LogUtil
@@ -142,8 +144,17 @@ class NativoPrebidRenderer : PrebidMobilePluginRenderer {
     // Private methods
 
     private fun isNativoAd(bidResponse: BidResponse): Boolean {
-        val adm = bidResponse.winningBid?.adm ?: ""
-        return adm.contains("load.js", ignoreCase = true)
+        bidResponse.winningBid?.let {
+            val nativoAdType = NativoBidExt.getNativoAdType(it)
+            if (nativoAdType != null) {
+                return nativoAdType != NativoAdType.STANDARD_DISPLAY
+            } else {
+                // Fallback
+                val adm = bidResponse.winningBid?.adm ?: ""
+                return adm.contains("load.js", ignoreCase = true)
+            }
+        }
+        return false
     }
 
     /**

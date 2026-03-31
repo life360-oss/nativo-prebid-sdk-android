@@ -114,7 +114,7 @@ public class AdExpandedDialog extends AdBaseDialog {
         if (closeView != null) {
             // Ensure close button sits comfortably below the status bar
             ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) closeView.getLayoutParams();
-            params.topMargin += Utils.convertDpToPx(30, closeView.getContext());
+            params.topMargin += Utils.convertDpToPx(32, closeView.getContext());
             closeView.setLayoutParams(params);
         }
     }
