@@ -96,6 +96,7 @@ public class PrebidMobile {
 
     private static boolean pbsDebug = false;
     private static boolean shareGeoLocation = false;
+    private static boolean shareGeoLocationWithNativo = false;
     private static boolean assignNativeAssetID = false;
 
     /**
@@ -206,6 +207,20 @@ public class PrebidMobile {
      */
     public static boolean isShareGeoLocation() {
         return shareGeoLocation;
+    }
+
+    /**
+     * Allows the SDK to share geolocation on Nativo bid requests if permission is granted by the user.
+     */
+    public static void setShareGeoLocationWithNativo(boolean share) {
+        PrebidMobile.shareGeoLocationWithNativo = share;
+    }
+
+    /**
+     * {@link #setShareGeoLocationWithNativo(boolean)}
+     */
+    public static boolean isShareGeoLocationWithNativo() {
+        return shareGeoLocationWithNativo;
     }
 
     /**

@@ -13,7 +13,6 @@ import org.prebid.mobile.rendering.networking.parameters.AdRequestInput
 import org.prebid.mobile.rendering.networking.parameters.AppInfoParameterBuilder
 import org.prebid.mobile.rendering.networking.parameters.BasicParameterBuilder
 import org.prebid.mobile.rendering.networking.parameters.DeviceInfoParameterBuilder
-import org.prebid.mobile.rendering.networking.parameters.GeoLocationParameterBuilder
 import org.prebid.mobile.rendering.networking.parameters.NetworkParameterBuilder
 import org.prebid.mobile.rendering.networking.parameters.ParameterBuilder
 import org.prebid.mobile.rendering.networking.parameters.UserConsentParameterBuilder
@@ -47,7 +46,7 @@ class NativoBidRequester : ExternalBidRequester {
 
         val builders = ArrayList<ParameterBuilder>()
         builders.add(BasicParameterBuilder(adUnitConfiguration, context.resources, ExternalViewerUtils.isBrowserActivityCallable(context)))
-        builders.add(GeoLocationParameterBuilder())
+        builders.add(NativoGeoLocationParameterBuilder())
         builders.add(AppInfoParameterBuilder(adUnitConfiguration))
         builders.add(DeviceInfoParameterBuilder(adUnitConfiguration))
         builders.add(NetworkParameterBuilder())
