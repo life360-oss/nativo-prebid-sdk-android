@@ -44,6 +44,11 @@ public class StandaloneBannerEventHandler implements BannerEventHandler {
     }
 
     @Override
+    public void trackClick() {
+
+    }
+
+    @Override
     public void destroy() {
 
     }

@@ -32,5 +32,7 @@ public interface BannerEventHandler {
 
     void trackImpression();
 
+    void trackClick();
+
     void destroy();
 }
