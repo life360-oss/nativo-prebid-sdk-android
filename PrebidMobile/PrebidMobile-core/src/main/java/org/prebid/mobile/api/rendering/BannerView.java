@@ -129,6 +129,7 @@ public class BannerView extends FrameLayout {
 
         @Override
         public void onAdClicked() {
+            eventHandler.trackClick();
             if (bannerViewListener != null) {
                 bannerViewListener.onAdClicked(BannerView.this);
             }

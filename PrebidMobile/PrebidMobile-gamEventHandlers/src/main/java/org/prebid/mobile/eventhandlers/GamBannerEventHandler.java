@@ -24,6 +24,8 @@ import android.view.View;
 
 import androidx.annotation.NonNull;
 
+import androidx.annotation.Nullable;
+
 import org.prebid.mobile.AdSize;
 import org.prebid.mobile.LogUtil;
 import org.prebid.mobile.api.exceptions.AdException;
@@ -32,6 +34,7 @@ import org.prebid.mobile.rendering.bidding.data.bid.Bid;
 import org.prebid.mobile.rendering.bidding.data.bid.BidResponse;
 import org.prebid.mobile.rendering.bidding.interfaces.BannerEventHandler;
 import org.prebid.mobile.rendering.bidding.listeners.BannerEventListener;
+import org.prebid.mobile.rendering.networking.tracking.ServerConnection;
 
 /**
  * Banner event handler for communication between Prebid rendering API and the GAM SDK.
@@ -59,6 +62,9 @@ public class GamBannerEventHandler implements BannerEventHandler, GamAdEventList
     private Handler appEventHandler;
 
     private boolean isExpectingAppEvent;
+
+    @Nullable
+    private String gamClickUrl;
 
     private BidResponse sdkBidResponse;
 
@@ -134,6 +140,7 @@ public class GamBannerEventHandler implements BannerEventHandler, GamAdEventList
     @Override
     public void requestAdWithBid(BidResponse bidResponse) {
         isExpectingAppEvent = false;
+        gamClickUrl = null;
 
         if (requestBanner != null) {
             LogUtil.error(TAG, "requestAdWithBid: Failed. Request to primaryAdServer is in progress.");
@@ -166,6 +173,14 @@ public class GamBannerEventHandler implements BannerEventHandler, GamAdEventList
     public void trackImpression() {
         if (proxyBanner != null) {
             proxyBanner.recordManualImpression();
+        }
+    }
+
+    @Override
+    public void trackClick() {
+        if (gamClickUrl != null) {
+            LogUtil.debug(TAG, "Firing GAM click URL: " + gamClickUrl);
+            ServerConnection.fireAndForget(gamClickUrl);
         }
     }
 
@@ -211,6 +226,14 @@ public class GamBannerEventHandler implements BannerEventHandler, GamAdEventList
         isExpectingAppEvent = false;
         recycleCurrentBanner();
         proxyBanner = gamBannerView;
+
+        if (proxyBanner != null) {
+            proxyBanner.extractGamClickUrl(clickUrl -> {
+                gamClickUrl = clickUrl;
+                LogUtil.debug(TAG, "GAM click URL extracted: " + clickUrl);
+            });
+        }
+
         bannerEventListener.onSdkWin(sdkBidResponse);
     }
 
