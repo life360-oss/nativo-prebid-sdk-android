@@ -2,6 +2,7 @@ package com.nativo.prebidsdk.renderer
 
 import android.content.Context
 import android.content.res.Resources
+import android.graphics.Color
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
@@ -103,6 +104,11 @@ class NativoPrebidRenderer : PrebidMobilePluginRenderer {
             adUnitConfiguration,
             bidResponse
         )
+
+        val adType = bidResponse.winningBid?.let { NativoBidExt.getNativoAdType(it) }
+        if (adType == NativoAdType.STORY || adType == NativoAdType.STP_VIDEO || adType == NativoAdType.CTP_VIDEO) {
+            displayViewRef.getInterstitialDisplayProperties().dialogBackgroundColor = Color.BLACK
+        }
 
         // Set default height to WRAP_CONTENT for non-Nativo ads
         displayViewRef.layoutParams = FrameLayout.LayoutParams(
