@@ -43,7 +43,9 @@ import org.prebid.mobile.rendering.bidding.data.bid.Bid;
 import org.prebid.mobile.rendering.bidding.data.bid.BidResponse;
 import org.prebid.mobile.rendering.bidding.interfaces.BannerEventHandler;
 import org.prebid.mobile.rendering.bidding.interfaces.StandaloneBannerEventHandler;
+import com.nativo.prebidsdk.bid.NativoBidExt;
 import com.nativo.prebidsdk.bid.NativoBidResponse;
+import com.nativo.prebidsdk.bid.NativoAdType;
 import com.nativo.prebidsdk.server.NativoServerProxy;
 import com.nativo.prebidsdk.utils.NativoUtils;
 import org.prebid.mobile.rendering.bidding.listeners.BannerEventListener;
@@ -104,12 +106,22 @@ public class BannerView extends FrameLayout {
         @Override
         public void onAdLoaded() {
             if (bannerViewListener != null) {
-                if (winningBid instanceof NativoBidResponse && NativoUtils.hasImplementedNativoCallback(bannerViewListener)) {
+                if (nativoDidRenderBid(winningBid)) {
+                    // Notify if Nativo was responsible for rendering the bid
                     bannerViewListener.onNativoAdLoaded(BannerView.this);
-                } else {
-                    bannerViewListener.onAdLoaded(BannerView.this);
+                    return;
                 }
+                bannerViewListener.onAdLoaded(BannerView.this);
             }
+        }
+
+        private boolean nativoDidRenderBid(BidResponse bidResponse) {
+            if (bidResponse instanceof NativoBidResponse && NativoUtils.hasImplementedNativoCallback(bannerViewListener)) {
+                NativoAdType adType = NativoBidExt.getNativoAdType(bidResponse.getWinningBid());
+                // Nativo rendering not used for type STANDARD_DISPLAY
+                return adType != NativoAdType.STANDARD_DISPLAY;
+            }
+            return false;
         }
 
         @Override
