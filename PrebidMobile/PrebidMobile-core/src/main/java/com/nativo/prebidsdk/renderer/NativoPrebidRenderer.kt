@@ -3,6 +3,7 @@ package com.nativo.prebidsdk.renderer
 import android.content.Context
 import android.content.res.Resources
 import android.graphics.Color
+import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
@@ -90,6 +91,14 @@ class NativoPrebidRenderer : PrebidMobilePluginRenderer {
                                 override fun onViewDetachedFromWindow(v: View) {}
                             })
                         }
+                    } else {
+                        val sizePair = bidResponse.getWinningBidWidthHeightPairDips(context)
+                        val layout = FrameLayout.LayoutParams(
+                            sizePair.first,
+                            sizePair.second,
+                            Gravity.CENTER
+                        )
+                        (displayView.parent as ViewGroup).layoutParams = layout
                     }
                     displayViewListener.onAdDisplayed()
                 }
