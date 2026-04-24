@@ -37,6 +37,7 @@ import org.prebid.mobile.api.rendering.listeners.BannerVideoListener;
 import org.prebid.mobile.api.rendering.listeners.BannerViewListener;
 import org.prebid.mobile.api.rendering.pluginrenderer.PluginEventListener;
 import org.prebid.mobile.api.rendering.pluginrenderer.PrebidMobilePluginRegister;
+import org.prebid.mobile.api.rendering.pluginrenderer.PrebidMobilePluginRenderer;
 import org.prebid.mobile.configuration.AdUnitConfiguration;
 import org.prebid.mobile.core.R;
 import org.prebid.mobile.rendering.bidding.data.bid.Bid;
@@ -536,15 +537,17 @@ public class BannerView extends FrameLayout {
         removeAllViews();
 
         displayView = new DisplayView(getContext(), displayViewListener, displayVideoListener, adUnitConfig, bidResponse);
-        // I believe this may have been a bug since the first clause would never be true since originally getPreferredPluginRendererName()
-        // would return 'null' unless the renderer was explicitely set, which for the default PrebidRenderer it never would be.
-        // Because of this, slight change to PrebidSDK needed here in order to ensure non-Nativo ads render as expected
-        // with correct width and height.
-        if (PrebidMobilePluginRegister.PREBID_MOBILE_RENDERER_NAME.equals(bidResponse.getPreferredPluginRendererName())) {
+        if (bidResponse.getPreferredPluginRendererName().equals(PrebidMobilePluginRegister.PREBID_MOBILE_RENDERER_NAME)) {
             final Pair<Integer, Integer> sizePair = bidResponse.getWinningBidWidthHeightPairDips(getContext());
             addView(displayView, new FrameLayout.LayoutParams(sizePair.first, sizePair.second, Gravity.CENTER));
         } else {
             addView(displayView, new FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT));
+        }
+
+        // Give the PluginRenderer the final layout pass
+        PrebidMobilePluginRenderer plugin = PrebidMobilePluginRegister.getInstance().getPluginForPreferredRenderer(bidResponse);
+        if (plugin != null) {
+            plugin.didInjectView(displayView, this, bidResponse);
         }
     }
 
