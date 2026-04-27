@@ -6,6 +6,8 @@ import android.graphics.Color
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewGroup.LayoutParams.MATCH_PARENT
+import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.FrameLayout
 import android.widget.ImageView
 import com.nativo.prebidsdk.bid.NativoAdType
@@ -57,8 +59,8 @@ class NativoPrebidRenderer : PrebidMobilePluginRenderer {
                     val snapshot = NativoUtils.captureViewSnapshot(displayView)
                     snapshot.tag = TAG
                     snapshot.layoutParams = FrameLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT
+                        MATCH_PARENT,
+                        MATCH_PARENT
                     )
                     displayView.addView(snapshot)
                 }
@@ -91,14 +93,6 @@ class NativoPrebidRenderer : PrebidMobilePluginRenderer {
                                 override fun onViewDetachedFromWindow(v: View) {}
                             })
                         }
-                    } else {
-                        val sizePair = bidResponse.getWinningBidWidthHeightPairDips(context)
-                        val layout = FrameLayout.LayoutParams(
-                            sizePair.first,
-                            sizePair.second,
-                            Gravity.CENTER
-                        )
-                        (displayView.parent as ViewGroup).layoutParams = layout
                     }
                     displayViewListener.onAdDisplayed()
                 }
@@ -121,8 +115,8 @@ class NativoPrebidRenderer : PrebidMobilePluginRenderer {
 
         // Set default height to WRAP_CONTENT for non-Nativo ads
         displayViewRef.layoutParams = FrameLayout.LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT,
-            ViewGroup.LayoutParams.WRAP_CONTENT
+            MATCH_PARENT,
+            WRAP_CONTENT
         )
 
         return displayViewRef
@@ -155,6 +149,10 @@ class NativoPrebidRenderer : PrebidMobilePluginRenderer {
     override fun unregisterEventListener(listenerKey: String) {
     }
 
+    override fun didInjectView(view: View, inBannerView: View, bidResponse: BidResponse) {
+        // Set wrap content as the default layout. Will be overridden later if is a Nativo ad.
+        view.layoutParams = FrameLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT, Gravity.CENTER)
+    }
 
     // Private methods
 
@@ -216,7 +214,7 @@ class NativoPrebidRenderer : PrebidMobilePluginRenderer {
         while (currentView != null) {
             val params = currentView.layoutParams
             if (params != null) {
-                params.width = ViewGroup.LayoutParams.MATCH_PARENT
+                params.width = MATCH_PARENT
                 currentView.layoutParams = params
             }
             if (currentView::class.java.name == BANNER_VIEW_CLASS) break
@@ -229,7 +227,7 @@ class NativoPrebidRenderer : PrebidMobilePluginRenderer {
         while (currentView != null) {
             val params = currentView.layoutParams
             if (params != null) {
-                params.height = ViewGroup.LayoutParams.MATCH_PARENT
+                params.height = MATCH_PARENT
                 currentView.layoutParams = params
             }
             if (currentView::class.java.name == BANNER_VIEW_CLASS) break
@@ -243,7 +241,7 @@ class NativoPrebidRenderer : PrebidMobilePluginRenderer {
             currentView.minimumHeight = minHeightPx
             val params = currentView.layoutParams
             if (params != null) {
-                params.height = ViewGroup.LayoutParams.WRAP_CONTENT
+                params.height = WRAP_CONTENT
                 currentView.layoutParams = params
             }
             if (currentView::class.java.name == BANNER_VIEW_CLASS) break
@@ -258,18 +256,18 @@ class NativoPrebidRenderer : PrebidMobilePluginRenderer {
             return
         }
 
-        val heightParam = if (useMatchParent) ViewGroup.LayoutParams.MATCH_PARENT else minHeightPx
+        val heightParam = if (useMatchParent) MATCH_PARENT else minHeightPx
 
         var current = firstChild as? ViewGroup
         while (current != null) {
             val params = current.layoutParams
             if (params != null) {
-                params.width = ViewGroup.LayoutParams.MATCH_PARENT
+                params.width = MATCH_PARENT
                 params.height = heightParam
                 current.layoutParams = params
             } else {
                 current.layoutParams = FrameLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    MATCH_PARENT,
                     heightParam
                 )
             }
