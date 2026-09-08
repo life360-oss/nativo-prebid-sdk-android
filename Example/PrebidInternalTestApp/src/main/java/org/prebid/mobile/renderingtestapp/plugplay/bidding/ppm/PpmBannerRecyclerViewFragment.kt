@@ -194,8 +194,8 @@ open class PpmBannerRecyclerViewFragment : AdFragment() {
     }
 
     private sealed interface FeedItem {
-        data object Placeholder : FeedItem
-        data object Banner : FeedItem
+        object Placeholder : FeedItem
+        object Banner : FeedItem
     }
 
 }

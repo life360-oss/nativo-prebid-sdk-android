@@ -58,6 +58,22 @@ android {
     }
 }
 
+// TEMP - Pin Kotlin to 1.8.0 due to AppHarbr constraint
+// This module's Kotlin sources can only consume dependencies whose metadata the project's
+// Kotlin 1.8.0 compiler can read (1.8.0 is pinned repo-wide for Geoedge AppHarbr compatibility),
+// so the two 2.x-metadata artifacts that reach this app's compile classpath are kept off it:
+//  - play-services-ads is declared as "+" in the version catalog and drifts to releases built
+//    with Kotlin 2.3, which also drag in a 2.x kotlin-stdlib. Pinned to the GMA version this
+//    project was last verified against.
+//  - databinding-ktx is added automatically by AGP because dataBinding is enabled; nothing here
+//    uses its StateFlow bindings, and the generated bindings only need databinding-runtime.
+configurations.all {
+    resolutionStrategy {
+        force "com.google.android.gms:play-services-ads:23.1.0"
+    }
+    exclude group: 'androidx.databinding', module: 'databinding-ktx'
+}
+
 dependencies {
     implementation project(':PrebidMobile')
     implementation project(':PrebidMobile-gamEventHandlers')
