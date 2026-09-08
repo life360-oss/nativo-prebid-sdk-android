@@ -67,7 +67,7 @@ class Life360VideoAdSlotController(
         )
         prefs.edit()
             .clear()
-            .putString("ntv_a", "442149")
+            .putString("ntv_a", "693505")
             .putString("ntv_tm", "tout")
             .apply()
     }
